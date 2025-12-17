@@ -12,6 +12,32 @@ def calculate_annuity_due_pv(pmt: float, monthly_rate: float, months: int) -> fl
     return pmt * ((1 - v**months) / monthly_rate) * (1 + monthly_rate)
 
 
+def calculate_actuarial_epv(monthly_payment: float, start_age: int, current_age: int, real_rate: float, gender, health) -> float:
+    """Calculates Expected Present Value of a life annuity starting at start_age."""
+    epv = 0.0
+    monthly_rate = (1 + real_rate)**(1/12) - 1
+    
+    # Sum from start_age to max_age (115)
+    for age in range(start_age, 116):
+        # We model monthly payments for this year
+        prob_survive_to_start_of_year = get_survival_probability(current_age, age, gender, health)
+        
+        # Simplified: Treat as instant annuity due at start of year for the whole year 
+        # (or sum 12 months individually for precision, let's do annual approx for MVP speed)
+        # Better: 12 months * monthly_payment * annuity_factor_for_1_year
+        
+        # Precision approach:
+        for month in range(12):
+            months_from_now = (age - current_age) * 12 + month
+            discount_factor = 1 / ((1 + monthly_rate)**months_from_now)
+            
+            # Probability of surviving to this specific month? 
+            # We only have annual granularity easily available. Use Year's Prob.
+            
+            epv += monthly_payment * discount_factor * prob_survive_to_start_of_year
+
+    return epv
+
 def calculate_bridge_scenario(req: CalculationRequest) -> CalculationResponse:
     # 1. Setup Rates
     monthly_real_rate = (1 + req.real_rate_of_return)**(1/12) - 1
@@ -64,23 +90,42 @@ def calculate_bridge_scenario(req: CalculationRequest) -> CalculationResponse:
             break
 
     # 7. Probability & Gain
-    prob_win = get_survival_probability(req.current_age, breakeven_age, req.gender, req.health_status)
+    # 7. Probability & Gain
+    # If assuming survival to 65, we measure probability from 65 (or current age if older)
+    start_age_for_probability = req.current_age
+    if not req.discount_pre_retirement_mortality and req.current_age < 65:
+        start_age_for_probability = 65
+
+    prob_win = get_survival_probability(start_age_for_probability, int(breakeven_age), req.gender, req.health_status)
 
     # Simplified Expected Gain
     expected_gain = 0.0  # Placeholder for complex calc, MVP uses Prob Win priority
 
     # 8. Recommendation
-    rec = "Take at 65"
-    reason = "Savings insufficient."
-    if is_affordable:
-        if prob_win > 0.60:
-            rec = "Delay to 70"
-            reason = f"You have a {prob_win:.1%} chance of winning. Breakeven: {breakeven_age}."
-        elif prob_win > 0.50:
-            rec = "Consider Delaying"
-            reason = f"It's a coin toss ({prob_win:.1%}). Delaying is insurance against living too long."
-        else:
-            reason = f"Odds favor taking early ({prob_win:.1%} chance of win)."
+    rec = "Take Early (65)"
+    if prob_win > 0.5:
+        rec = "Delay to 70"
+    
+    # 9. Detailed Recommendation Reasoning
+    prob_survive_to_breakeven = prob_win
+    
+    reason = (
+        f"To benefit from delaying, you must live past Age {int(breakeven_age)}. "
+        f"Given your {req.health_status.value} health, you have a {prob_survive_to_breakeven:.1%} probability of reaching this milestone."
+    )
+
+
+    epv_early = calculate_actuarial_epv(req.cpp_estimate_at_65, 65, req.current_age, req.real_rate_of_return, req.gender, req.health_status)
+    epv_delayed = calculate_actuarial_epv(target_monthly, 70, req.current_age, req.real_rate_of_return, req.gender, req.health_status)
+
+    # Conditional Probability Adjustment
+    if not req.discount_pre_retirement_mortality and req.current_age < 65:
+        # User wants "Conditional EPV" (Assuming they live to 65)
+        # We divide by P(Survive Current -> 65) to remove that discount
+        prob_survive_pre_ret = get_survival_probability(req.current_age, 65, req.gender, req.health_status)
+        if prob_survive_pre_ret > 0:
+             epv_early /= prob_survive_pre_ret
+             epv_delayed /= prob_survive_pre_ret
 
     return CalculationResponse(
         bridge_cost_lump_sum=round(cost_today, 2),
@@ -93,6 +138,8 @@ def calculate_bridge_scenario(req: CalculationRequest) -> CalculationResponse:
         probability_of_winning=round(prob_win, 4),
         expected_lifetime_gain=round(expected_gain, 2),
         life_expectancy=get_life_expectancy(req.current_age, req.gender, req.health_status),
+        epv_early=round(epv_early, 2),
+        epv_delayed=round(epv_delayed, 2),
         recommendation=rec,
         recommendation_reasoning=reason
     )

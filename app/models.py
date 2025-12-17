@@ -21,8 +21,9 @@ class CalculationRequest(BaseModel):
     health_status: HealthStatus = HealthStatus.AVERAGE
 
     # Assumptions
-    real_rate_of_return: float = Field(0.03, ge=0.0, le=0.15)
-    wage_growth: float = Field(0.01, ge=0.0, le=0.10)
+    real_rate_of_return: float = Field(0.01, ge=0.0, le=0.15)
+    wage_growth: float = Field(0.011, ge=0.0, le=0.10)
+    discount_pre_retirement_mortality: bool = True  # If False, assumes survival to 65
     inflation_rate: float = Field(0.021, ge=0.0, le=0.10)
 
 
@@ -39,6 +40,8 @@ class CalculationResponse(BaseModel):
     probability_of_winning: float
     expected_lifetime_gain: float
     life_expectancy: float
+    epv_early: float
+    epv_delayed: float
 
     # UX
     recommendation: str

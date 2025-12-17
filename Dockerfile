@@ -5,7 +5,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy Data and Code
+COPY "Mortality Table - Sheet1.csv" .
 COPY app/ ./app/
+COPY widget/ ./widget/
 
 EXPOSE 8000
 
