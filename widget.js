@@ -95,7 +95,7 @@ function calculateBridgeScenario(req) {
         if (prob65 > 0) { epvEarly /= prob65; epvDelayed /= prob65; }
     }
     return {
-        bridge_cost_lump_sum: parseFloat(costToday.toFixed(2)),
+        bridge_cost_lump_sum: Math.round(costToday),
         target_monthly_income_at_70: parseFloat(targetMonthly.toFixed(2)),
         is_affordable: isAffordable,
         shortfall_amount: parseFloat(shortfall.toFixed(2)),
