@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Retirement Scorecard | CPP Bridge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        .score-ring {
+            transform: rotate(-90deg);
+        }
+        .score-ring circle {
+            transition: stroke-dashoffset 1s ease-out;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+        .delay-400 { animation-delay: 0.4s; }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 id="report-logo" class="text-2xl font-bold text-slate-900 dark:text-white">CPP Bridge</h1>
+            <p class="text-slate-500">Retirement Readiness Report</p>
+        </div>
+
+        <!-- Score Card -->
+        <div id="score-card" class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-8 mb-6 opacity-0 animate-fade-in-up">
+            <div class="flex flex-col md:flex-row items-center justify-between">
+                <!-- Score Ring -->
+                <div class="relative w-48 h-48 mb-6 md:mb-0">
+                    <svg class="score-ring w-full h-full" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#E5E7EB" stroke-width="8" class="dark:stroke-slate-700"/>
+                        <circle id="score-circle" cx="50" cy="50" r="45" fill="none"
+                            stroke="#10B981" stroke-width="8" stroke-linecap="round"
+                            stroke-dasharray="283" stroke-dashoffset="283"/>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span id="score-number" class="text-5xl font-bold text-slate-900 dark:text-white">0</span>
+                        <span class="text-slate-500 text-sm">/100</span>
+                    </div>
+                </div>
+
+                <!-- Score Label -->
+                <div class="text-center md:text-left md:ml-8 flex-1">
+                    <div id="score-badge" class="inline-block px-4 py-1 rounded-full text-sm font-bold mb-3">
+                        Loading...
+                    </div>
+                    <h2 id="score-label" class="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                        Calculating...
+                    </h2>
+                    <p id="score-summary" class="text-slate-600 dark:text-slate-400">
+                        Please wait while we analyze your results.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Breakdown Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+
+            <!-- Income Card -->
+            <div id="income-card" class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 opacity-0 animate-fade-in-up delay-100">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-2xl">💰</span>
+                    <span id="income-rating" class="px-2 py-0.5 rounded text-xs font-bold">--</span>
+                </div>
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Income Security</h3>
+                <div class="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div id="income-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-slate-500 mt-2"><span id="income-points">0</span> / 25 points</p>
+            </div>
+
+            <!-- Assets Card -->
+            <div id="assets-card" class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 opacity-0 animate-fade-in-up delay-200">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-2xl">📊</span>
+                    <span id="assets-rating" class="px-2 py-0.5 rounded text-xs font-bold">--</span>
+                </div>
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Asset Longevity</h3>
+                <div class="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div id="assets-bar" class="h-full bg-blue-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-slate-500 mt-2"><span id="assets-points">0</span> / 20 points</p>
+            </div>
+
+            <!-- Tax Card -->
+            <div id="tax-card" class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 opacity-0 animate-fade-in-up delay-300">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-2xl">📋</span>
+                    <span id="tax-rating" class="px-2 py-0.5 rounded text-xs font-bold">--</span>
+                </div>
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Tax Efficiency</h3>
+                <div class="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div id="tax-bar" class="h-full bg-amber-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-slate-500 mt-2"><span id="tax-points">0</span> / 15 points</p>
+            </div>
+
+            <!-- Psychology Card -->
+            <div id="psychology-card" class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 opacity-0 animate-fade-in-up delay-400">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-2xl">🧠</span>
+                    <span id="psychology-rating" class="px-2 py-0.5 rounded text-xs font-bold">--</span>
+                </div>
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Psychological Readiness</h3>
+                <div class="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div id="psychology-bar" class="h-full bg-purple-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-slate-500 mt-2"><span id="psychology-points">0</span> / 10 points</p>
+            </div>
+        </div>
+
+        <!-- Insights Panel -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 mb-6">
+            <h3 class="font-bold text-slate-900 dark:text-white mb-4">📝 Your Personalized Insights</h3>
+            <div id="verdict-text" class="text-slate-600 dark:text-slate-400 mb-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                Loading insights...
+            </div>
+            <h4 class="font-semibold text-slate-900 dark:text-white mb-3">Recommended Next Steps:</h4>
+            <ul id="recommendations-list" class="space-y-2">
+                <!-- Populated by JS -->
+            </ul>
+        </div>
+
+        <!-- Calculator Recap -->
+        <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-6 mb-6 border border-indigo-100 dark:border-indigo-800/30">
+            <h3 class="font-bold text-indigo-900 dark:text-indigo-200 mb-3">🧮 Your CPP Bridge Analysis</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                    <p class="text-indigo-600 dark:text-indigo-400 text-xs uppercase">Bridge Cost</p>
+                    <p id="recap-cost" class="font-bold text-indigo-900 dark:text-indigo-100">$0</p>
+                </div>
+                <div>
+                    <p class="text-indigo-600 dark:text-indigo-400 text-xs uppercase">Win Probability</p>
+                    <p id="recap-prob" class="font-bold text-indigo-900 dark:text-indigo-100">0%</p>
+                </div>
+                <div>
+                    <p class="text-indigo-600 dark:text-indigo-400 text-xs uppercase">Breakeven Age</p>
+                    <p id="recap-breakeven" class="font-bold text-indigo-900 dark:text-indigo-100">--</p>
+                </div>
+                <div>
+                    <p class="text-indigo-600 dark:text-indigo-400 text-xs uppercase">Recommendation</p>
+                    <p id="recap-rec" class="font-bold text-indigo-900 dark:text-indigo-100">--</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div id="cta-section" class="bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-2xl p-8 text-center text-white">
+            <h3 class="text-2xl font-bold mb-2">Ready to Optimize Your Retirement?</h3>
+            <p class="text-emerald-100 mb-6">Get personalized guidance from our expert advisors</p>
+            <a id="cta-button" href="#"
+                class="inline-block px-8 py-4 bg-white text-emerald-600 font-bold rounded-xl shadow-lg hover:bg-emerald-50 transition-all transform hover:scale-[1.02]">
+                Book a Strategy Call &rarr;
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-sm text-slate-400">
+            <p>&copy; 2024 CPP Bridge Calculator. For educational purposes only.</p>
+            <p class="mt-1">
+                <a href="index.html" class="text-indigo-500 hover:underline">Recalculate</a> ·
+                <a href="#" class="text-indigo-500 hover:underline">Privacy Policy</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="js/report.js"></script>
+    <script src="js/whitelabel.js"></script>
+</body>
+</html>

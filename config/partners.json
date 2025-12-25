@@ -1,0 +1,29 @@
+{
+    "default": {
+        "name": "CPP Bridge",
+        "logo_type": "text",
+        "logo_text": "CPP Bridge",
+        "brand_color": "#4F46E5",
+        "brand_color_dark": "#6366F1",
+        "cta_text": "Book a Strategy Call",
+        "cta_url": "#contact"
+    },
+    "optiml": {
+        "name": "Optiml",
+        "logo_type": "image",
+        "logo_url": "/assets/logos/optiml.png",
+        "brand_color": "#3B82F6",
+        "brand_color_dark": "#60A5FA",
+        "cta_text": "Get Your Free Tax Analysis",
+        "cta_url": "https://optiml.ca/book-demo"
+    },
+    "adviice": {
+        "name": "Adviice",
+        "logo_type": "image",
+        "logo_url": "/assets/logos/adviice.png",
+        "brand_color": "#10B981",
+        "brand_color_dark": "#34D399",
+        "cta_text": "Start Your Financial Plan",
+        "cta_url": "https://adviice.ca/signup"
+    }
+}
