@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Retirement Scorecard | CPP Bridge</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -78,8 +79,29 @@
             </div>
         </div>
 
-        <!-- Breakdown Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <!-- Radar Chart -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 mb-6">
+            <h3 class="font-bold text-slate-900 dark:text-white mb-4 text-center">Your Retirement Efficiency Profile</h3>
+            <div class="max-w-md mx-auto">
+                <canvas id="radar-chart" width="300" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- Breakdown Grid - 5 Categories -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+
+            <!-- Foundation Card -->
+            <div id="foundation-card" class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 opacity-0 animate-fade-in-up delay-100">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-2xl">🎯</span>
+                    <span id="foundation-rating" class="px-2 py-0.5 rounded text-xs font-bold">--</span>
+                </div>
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Foundation & Clarity</h3>
+                <div class="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div id="foundation-bar" class="h-full bg-indigo-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-slate-500 mt-2"><span id="foundation-points">0</span> / <span id="foundation-max">13</span> points</p>
+            </div>
 
             <!-- Income Card -->
             <div id="income-card" class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 opacity-0 animate-fade-in-up delay-100">
@@ -91,46 +113,46 @@
                 <div class="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
                     <div id="income-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
                 </div>
-                <p class="text-xs text-slate-500 mt-2"><span id="income-points">0</span> / 25 points</p>
-            </div>
-
-            <!-- Assets Card -->
-            <div id="assets-card" class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 opacity-0 animate-fade-in-up delay-200">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-2xl">📊</span>
-                    <span id="assets-rating" class="px-2 py-0.5 rounded text-xs font-bold">--</span>
-                </div>
-                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Asset Longevity</h3>
-                <div class="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div id="assets-bar" class="h-full bg-blue-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
-                </div>
-                <p class="text-xs text-slate-500 mt-2"><span id="assets-points">0</span> / 20 points</p>
+                <p class="text-xs text-slate-500 mt-2"><span id="income-points">0</span> / <span id="income-max">27</span> points</p>
             </div>
 
             <!-- Tax Card -->
-            <div id="tax-card" class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 opacity-0 animate-fade-in-up delay-300">
+            <div id="tax-card" class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 opacity-0 animate-fade-in-up delay-200">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-2xl">📋</span>
                     <span id="tax-rating" class="px-2 py-0.5 rounded text-xs font-bold">--</span>
                 </div>
-                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Tax Efficiency</h3>
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Tax Strategy</h3>
                 <div class="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
                     <div id="tax-bar" class="h-full bg-amber-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
                 </div>
-                <p class="text-xs text-slate-500 mt-2"><span id="tax-points">0</span> / 15 points</p>
+                <p class="text-xs text-slate-500 mt-2"><span id="tax-points">0</span> / <span id="tax-max">40</span> points</p>
             </div>
 
-            <!-- Psychology Card -->
-            <div id="psychology-card" class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 opacity-0 animate-fade-in-up delay-400">
+            <!-- Lifestyle Card -->
+            <div id="lifestyle-card" class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 opacity-0 animate-fade-in-up delay-300">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="text-2xl">🧠</span>
-                    <span id="psychology-rating" class="px-2 py-0.5 rounded text-xs font-bold">--</span>
+                    <span class="text-2xl">🏠</span>
+                    <span id="lifestyle-rating" class="px-2 py-0.5 rounded text-xs font-bold">--</span>
                 </div>
-                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Psychological Readiness</h3>
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Lifestyle Reality</h3>
                 <div class="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div id="psychology-bar" class="h-full bg-purple-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    <div id="lifestyle-bar" class="h-full bg-rose-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
                 </div>
-                <p class="text-xs text-slate-500 mt-2"><span id="psychology-points">0</span> / 10 points</p>
+                <p class="text-xs text-slate-500 mt-2"><span id="lifestyle-points">0</span> / <span id="lifestyle-max">13</span> points</p>
+            </div>
+
+            <!-- Risk Card -->
+            <div id="risk-card" class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 opacity-0 animate-fade-in-up delay-400">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-2xl">🛡️</span>
+                    <span id="risk-rating" class="px-2 py-0.5 rounded text-xs font-bold">--</span>
+                </div>
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Risk & Resilience</h3>
+                <div class="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div id="risk-bar" class="h-full bg-blue-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-slate-500 mt-2"><span id="risk-points">0</span> / <span id="risk-max">25</span> points</p>
             </div>
         </div>
 

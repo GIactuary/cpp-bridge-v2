@@ -1,342 +1,612 @@
 <!DOCTYPE html>
-<html lang="en" class="antialiased">
+<html lang="en" class="antialiased scroll-smooth">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPP Bridge Calculator</title>
+    <title>The CPP Bridge | Professional Retirement Planning Tools</title>
+    <meta name="description"
+        content="Free, actuarial-grade tools to optimize your CPP, OAS, and decumulation strategy. Plan like an actuary, not a gambler.">
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['"Inter"', 'sans-serif'],
                     },
                     colors: {
-                        slate: {
-                            850: '#1e293b',
-                            900: '#0f172a',
-                            950: '#020617',
+                        nobel: {
+                            gold: '#C5A059',
+                            dark: '#1a1a1a',
+                            cream: '#F9F8F4',
                         }
                     }
                 }
             }
         }
     </script>
+
     <style>
-        /* Custom Scrollbar for a cleaner look */
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 100px;
+        }
+
+        body {
+            background-color: #F9F8F4;
+            color: #1a1a1a;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .serif {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .nav-link {
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background-color: #C5A059;
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .gold-button {
+            background-color: #C5A059;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .gold-button:hover {
+            background-color: #b08d4a;
+            transform: translateY(-1px);
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            border-color: #C5A059;
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -10px rgba(197, 160, 89, 0.15);
+        }
+
+        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
         }
 
         ::-webkit-scrollbar-track {
-            background: transparent;
+            background: #F9F8F4;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
+            background: #C5A059;
+            border-radius: 10px;
         }
 
-        .dark ::-webkit-scrollbar-thumb {
-            background: #475569;
+        @media print {
+
+            nav,
+            footer,
+            button,
+            .no-print {
+                display: none !important;
+            }
         }
     </style>
 </head>
 
-<body
-    class="bg-gray-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
+<body class="bg-nobel-cream text-nobel-dark selection:bg-nobel-gold/20">
 
-    <div
-        class="max-w-5xl w-full bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-white/20 dark:border-slate-800 flex flex-col md:flex-row transition-colors duration-300">
-
-        <!-- Sidebar / Input Panel -->
-        <div
-            class="w-full md:w-2/5 p-4 sm:p-6 md:p-8 bg-gray-50 dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 flex flex-col justify-between">
-
-            <!-- Header -->
-            <div>
-                <div class="flex justify-between items-center mb-8">
-                    <div>
-                        <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">CPP Bridge</h1>
-                        <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mt-1">Actuarial Engine</p>
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-6 sm:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo -->
+                <a href="/" class="flex items-center space-x-3 group">
+                    <div
+                        class="w-10 h-10 bg-nobel-dark flex items-center justify-center rounded-sm transition-transform group-hover:rotate-12">
+                        <svg class="w-6 h-6 text-nobel-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
                     </div>
-                    <!-- Theme Toggle -->
-                    <button onclick="toggleTheme()"
-                        class="p-2 rounded-full bg-gray-200 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-700 transition-colors">
-                        <!-- Sun Icon -->
-                        <svg id="sun-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
-                            </path>
-                        </svg>
-                        <!-- Moon Icon -->
-                        <svg id="moon-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z">
-                            </path>
-                        </svg>
-                    </button>
+                    <span class="serif font-bold text-xl tracking-tight text-nobel-dark">The CPP Bridge</span>
+                </a>
+
+                <!-- Desktop Nav -->
+                <div class="hidden md:flex items-center space-x-10">
+                    <a href="#tools" class="nav-link text-sm font-medium tracking-wide uppercase">Tools</a>
+                    <a href="#insights" class="nav-link text-sm font-medium tracking-wide uppercase">Insights</a>
+                    <a href="calculator.html"
+                        class="nav-link text-sm font-medium tracking-wide uppercase">Calculator</a>
+                    <a href="quiz.html"
+                        class="gold-button px-6 py-2.5 text-sm font-bold rounded-sm tracking-widest uppercase shadow-sm">
+                        Get Scored
+                    </a>
                 </div>
 
-                <!-- Input Form -->
-                <div class="space-y-6">
-
-                    <!-- Gender -->
-                    <div class="flex items-center justify-between p-1 bg-gray-200 dark:bg-slate-800 rounded-lg">
-                        <label class="flex-1 text-center cursor-pointer">
-                            <input type="radio" name="gender" value="male" checked class="peer hidden">
-                            <div
-                                class="py-2 text-sm font-medium text-gray-500 dark:text-gray-400 rounded-md peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400 peer-checked:shadow-sm transition-all">
-                                Male</div>
-                        </label>
-                        <label class="flex-1 text-center cursor-pointer">
-                            <input type="radio" name="gender" value="female" class="peer hidden">
-                            <div
-                                class="py-2 text-sm font-medium text-gray-500 dark:text-gray-400 rounded-md peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-pink-600 dark:peer-checked:text-pink-400 peer-checked:shadow-sm transition-all">
-                                Female</div>
-                        </label>
-                    </div>
-
-                    <!-- Age -->
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Current Age</label>
-                            <span id="age-val" class="text-sm font-bold text-indigo-600 dark:text-indigo-400">55</span>
-                        </div>
-                        <input type="range" id="age" min="30" max="69" value="55"
-                            class="w-full h-2 bg-gray-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600">
-                    </div>
-
-                    <!-- Financial Inputs -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <div class="space-y-1">
-                            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide">CPP @ 65</label>
-                            <div class="relative">
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
-                                <input type="number" id="cpp" value="1000"
-                                    class="w-full pl-6 pr-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow font-medium">
-                            </div>
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Savings</label>
-                            <div class="relative">
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
-                                <input type="number" id="savings" value="150000"
-                                    class="w-full pl-6 pr-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow font-medium">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Health -->
-                    <div class="space-y-1">
-                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Health Status</label>
-                        <select id="health"
-                            class="w-full p-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
-                            <option value="average">Average</option>
-                            <option value="excellent">Excellent</option>
-                            <option value="poor">Poor</option>
-                        </select>
-                        <div id="le-display"
-                            class="pl-1 pt-1 text-xs font-medium text-indigo-500 dark:text-indigo-400 h-4"></div>
-                    </div>
-
-                    <!-- Advanced (Collapsible) -->
-                    <details class="group">
-                        <summary
-                            class="flex items-center justify-between cursor-pointer text-xs font-semibold text-slate-400 uppercase tracking-wide hover:text-indigo-500 transition-colors">
-                            <span>Advanced Assumptions</span>
-                            <span class="transition-transform group-open:rotate-180">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </span>
-                        </summary>
-                        <div
-                            class="mt-4 space-y-4 pl-1 p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-100 dark:border-slate-700 shadow-sm">
-                            <div class="space-y-2">
-                                <div class="flex justify-between text-xs">
-                                    <span>Real Return</span>
-                                    <span id="ror-val" class="font-bold">1.0%</span>
-                                </div>
-                                <input type="range" id="ror" min="0" max="0.08" step="0.005" value="0.01"
-                                    class="w-full h-1 bg-gray-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-teal-500">
-                            </div>
-                            <div class="space-y-2">
-                                <div class="flex justify-between text-xs">
-                                    <span>Wage Growth</span>
-                                    <span id="wage-val" class="font-bold">1.1%</span>
-                                </div>
-                                <input type="range" id="wage" min="0" max="0.05" step="0.001" value="0.011"
-                                    class="w-full h-1 bg-gray-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-teal-500">
-                            </div>
-
-                            <!-- Mortality Toggle -->
-                            <div
-                                class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-700">
-                                <span class="text-xs font-medium text-slate-600 dark:text-slate-400">Apply Mortality Adjustments (Age &lt; 65)
-                                    </span>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="mortality-risk" checked class="sr-only peer">
-                                    <div
-                                        class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600">
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                    </details>
-                </div>
-            </div>
-
-            <!-- Action -->
-            <div class="mt-8">
-                <button onclick="calculate()"
-                    class="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                    Calculate Strategy
+                <!-- Mobile menu button -->
+                <button id="mobile-menu-btn" class="md:hidden p-2 text-nobel-dark">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
                 </button>
-                <!-- Get Full Score Button (initially hidden) -->
-                <button id="get-full-score-btn"
-                    onclick="goToQuiz()"
-                    class="hidden w-full mt-3 py-3.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                    Get Your Full Retirement Score
-                </button>
-                <p class="mt-4 text-[10px] text-center text-slate-400 dark:text-slate-500 leading-normal px-2">
-                    <span class="font-semibold text-slate-500 dark:text-slate-400">Disclaimer:</span> This tool is for
-                    educational purposes only and does not constitute financial advice. Please consult a qualified
-                    professional before making financial decisions.
-                </p>
             </div>
         </div>
 
-        <!-- Right Panel: Results -->
-        <div class="w-full md:w-3/5 bg-white dark:bg-slate-900 p-4 sm:p-6 md:p-8 flex flex-col items-center justify-center relative">
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 py-6 px-8 space-y-4 shadow-xl">
+            <a href="#tools" class="block text-sm font-medium tracking-widest uppercase">Tools</a>
+            <a href="#insights" class="block text-sm font-medium tracking-widest uppercase">Insights</a>
+            <a href="calculator.html"
+                class="block text-sm font-medium tracking-widest uppercase border-b border-gray-50 pb-2">Calculator</a>
+            <a href="quiz.html"
+                class="block w-full text-center gold-button py-4 text-sm font-bold tracking-widest uppercase rounded-sm">Get
+                Scored</a>
+        </div>
+    </nav>
 
-            <!-- Empty State -->
-            <div id="empty-state" class="text-center text-gray-400 dark:text-gray-600 animate-pulse">
-                <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+    <!-- Hero Section -->
+    <section class="relative pt-40 pb-20 lg:pt-52 lg:pb-32 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6 sm:px-8">
+            <div class="grid lg:grid-cols-12 gap-16 items-center">
+                <!-- Left: Copy -->
+                <div class="lg:col-span-7 hero-content">
+                    <div class="inline-flex items-center space-x-2 mb-8">
+                        <span class="w-1.5 h-1.5 bg-nobel-gold rounded-full"></span>
+                        <span class="text-xs font-bold tracking-[0.2em] uppercase text-nobel-dark/60">Actuarial-Grade
+                            Retirement Planning</span>
+                    </div>
+
+                    <h1 class="serif text-5xl sm:text-6xl lg:text-7xl font-bold text-nobel-dark leading-[1.1] mb-8">
+                        Plan your retirement like an <span class="italic text-nobel-gold">actuary</span>, not a gambler.
+                    </h1>
+
+                    <p class="text-lg text-nobel-dark/70 mb-12 leading-relaxed max-w-xl font-medium">
+                        Free, professional-grade tools to optimize your CPP, OAS, and decumulation strategy. Built on
+                        rigorous Canadian data and actuarial science.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row gap-6">
+                        <a href="quiz.html"
+                            class="gold-button inline-flex items-center justify-center px-10 py-5 text-sm font-bold tracking-widest uppercase rounded-sm shadow-lg shadow-nobel-gold/10">
+                            Get Your Score
+                            <svg class="w-4 h-4 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                            </svg>
+                        </a>
+                        <a href="calculator.html"
+                            class="inline-flex items-center justify-center px-10 py-5 bg-white text-nobel-dark text-sm font-bold tracking-widest uppercase border border-gray-200 hover:border-nobel-gold transition-all rounded-sm">
+                            Use Calculator
+                        </a>
+                    </div>
+
+                    <!-- Trust indicators -->
+                    <div class="mt-16 pt-8 border-t border-gray-100 flex items-center gap-10">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold tracking-widest uppercase text-nobel-dark/40">Powered
+                                by</span>
+                            <span class="serif font-bold text-sm">OSFI Data</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold tracking-widest uppercase text-nobel-dark/40">Used by</span>
+                            <span class="serif font-bold text-sm">2.5k+ Canadians</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Visual -->
+                <div class="lg:col-span-5 relative hidden lg:block">
+                    <div
+                        class="relative z-10 p-1 bg-white border border-gray-100 shadow-2xl rounded-sm group overflow-hidden">
+                        <div
+                            class="absolute inset-0 bg-nobel-gold/5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        </div>
+                        <div class="p-8">
+                            <div class="flex items-center justify-between mb-10">
+                                <span class="text-[10px] font-bold tracking-[0.2em] uppercase text-nobel-gold">Active
+                                    Strategy</span>
+                                <div
+                                    class="px-2 py-0.5 bg-nobel-dark text-[9px] font-bold tracking-widest text-white uppercase rounded-sm">
+                                    Optimized</div>
+                            </div>
+
+                            <div class="space-y-8 mb-10">
+                                <div class="h-1.5 bg-gray-50 rounded-full overflow-hidden">
+                                    <div class="h-full bg-nobel-gold w-3/4 rounded-full"></div>
+                                </div>
+                                <div class="h-1.5 bg-gray-50 rounded-full overflow-hidden">
+                                    <div class="h-full bg-nobel-dark w-1/2 rounded-full"></div>
+                                </div>
+                                <div class="h-1.5 bg-gray-50 rounded-full overflow-hidden">
+                                    <div class="h-full bg-nobel-gold w-5/6 rounded-full"></div>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-end">
+                                <span class="serif text-3xl font-bold text-nobel-dark">73.2%</span>
+                                <span class="text-[10px] font-bold tracking-widest uppercase text-nobel-dark/40">Win
+                                    Probability</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Decorative element -->
+                    <div class="absolute -top-10 -right-10 w-40 h-40 bg-nobel-gold/10 blur-3xl rounded-full"></div>
+                    <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-nobel-dark/5 blur-3xl rounded-full"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tools Ecosystem Section -->
+    <section id="tools" class="py-32 bg-white">
+        <div class="max-w-7xl mx-auto px-6 sm:px-8">
+            <div class="mb-20">
+                <span class="text-xs font-bold tracking-[0.2em] uppercase text-nobel-gold mb-4 block">The Toolkit</span>
+                <h2 class="serif text-4xl sm:text-5xl font-bold text-nobel-dark mb-6">Your Retirement Ecosystem</h2>
+                <p class="text-lg text-nobel-dark/60 max-w-2xl leading-relaxed font-medium">Professional-grade
+                    calculators and assessments, built by financial engineers for Canadians who demand precision.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-10">
+                <!-- Featured: CPP Bridge Calculator -->
+                <div class="md:col-span-2 card p-10 lg:p-12 relative overflow-hidden group">
+                    <div
+                        class="absolute top-0 right-0 w-64 h-64 bg-nobel-gold/5 rounded-full -mr-20 -mt-20 group-hover:scale-110 transition-transform duration-700">
+                    </div>
+                    <div class="relative">
+                        <div
+                            class="inline-flex items-center px-3 py-1 bg-nobel-gold/10 text-nobel-gold text-[10px] font-bold tracking-widest uppercase rounded-sm mb-8">
+                            Most Popular
+                        </div>
+                        <h3 class="serif text-3xl font-bold mb-6 text-nobel-dark">The CPP Bridge Calculator</h3>
+                        <p class="text-nobel-dark/60 text-lg mb-10 max-w-xl leading-relaxed">Calculate the true ROI of
+                            delaying your CPP from 65 to 70. See your breakeven age, win probability, and optimal
+                            strategy with actuarial precision.</p>
+                        <a href="calculator.html"
+                            class="gold-button inline-flex items-center justify-center px-8 py-4 text-xs font-bold tracking-widest uppercase rounded-sm translate-y-0 group-hover:-translate-y-1 transition-transform">
+                            Launch Calculator
+                            <svg class="w-4 h-4 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Card: Retirement Score Quiz -->
+                <div class="card p-10 flex flex-col group">
+                    <div
+                        class="w-12 h-12 bg-nobel-dark flex items-center justify-center rounded-sm mb-8 group-hover:rotate-6 transition-transform">
+                        <svg class="w-6 h-6 text-nobel-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="serif text-2xl font-bold text-nobel-dark mb-4">Retirement Readiness Score</h3>
+                    <p class="text-nobel-dark/60 mb-10 leading-relaxed font-medium">A diagnostic score across 4 key
+                        dimensions of your plan.</p>
+                    <div class="mt-auto">
+                        <a href="quiz.html"
+                            class="text-nobel-dark text-[11px] font-bold tracking-widest uppercase border-b border-nobel-gold pb-1 hover:text-nobel-gold transition-colors">
+                            Start Assessment &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Card: RRSP vs TFSA (Coming Soon) -->
+                <div class="card p-10 bg-gray-50/50 border-dashed border-gray-200 opacity-80">
+                    <div class="w-12 h-12 bg-gray-100 flex items-center justify-center rounded-sm mb-8">
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                        </svg>
+                    </div>
+                    <h3 class="serif text-2xl font-bold text-gray-400 mb-4">RRSP vs. TFSA Optimizer</h3>
+                    <p class="text-gray-400 mb-8 font-medium">Optimize your drawdown sequence for maximum tax
+                        efficiency.</p>
+                    <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400">Coming Q2 2025</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Authority / Trust Section -->
+    <section class="py-32 bg-nobel-cream">
+        <div class="max-w-7xl mx-auto px-6 sm:px-8">
+            <div class="text-center mb-20 section-header">
+                <span class="text-xs font-bold tracking-[0.2em] uppercase text-nobel-gold mb-4 block">Data
+                    Fidelity</span>
+                <h2 class="serif text-4xl sm:text-5xl font-bold text-nobel-dark mb-6">Based on Official Canadian Data
+                </h2>
+                <p class="text-lg text-nobel-dark/60 max-w-2xl mx-auto leading-relaxed font-medium">Our methodology is
+                    transparent and rooted in official government mortality tables and recognized actuarial research.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 trust-badges">
+                <!-- OSFI Badge -->
+                <div class="text-center group">
+                    <div
+                        class="w-20 h-20 mx-auto mb-8 bg-white flex items-center justify-center rounded-sm shadow-sm group-hover:shadow-md transition-shadow">
+                        <svg class="w-10 h-10 text-nobel-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="serif text-xl font-bold text-nobel-dark mb-3">OSFI Mortality Tables</h3>
+                    <p class="text-sm text-nobel-dark/60 leading-relaxed font-medium px-4">Utilizing the latest 2025
+                        Life Tables from the Office of the Superintendent of Financial Institutions.</p>
+                </div>
+
+                <!-- CIA Methodology Badge -->
+                <div class="text-center group">
+                    <div
+                        class="w-20 h-20 mx-auto mb-8 bg-white flex items-center justify-center rounded-sm shadow-sm group-hover:shadow-md transition-shadow">
+                        <svg class="w-10 h-10 text-nobel-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="serif text-xl font-bold text-nobel-dark mb-3">CIA Methodology</h3>
+                    <p class="text-sm text-nobel-dark/60 leading-relaxed font-medium px-4">Calculations follow Canadian
+                        Institute of Actuaries peer-reviewed research papers.</p>
+                </div>
+
+                <!-- Tax Compliant Badge -->
+                <div class="text-center group">
+                    <div
+                        class="w-20 h-20 mx-auto mb-8 bg-white flex items-center justify-center rounded-sm shadow-sm group-hover:shadow-md transition-shadow">
+                        <svg class="w-10 h-10 text-nobel-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="serif text-xl font-bold text-nobel-dark mb-3">Canadian Tax Compliant</h3>
+                    <p class="text-sm text-nobel-dark/60 leading-relaxed font-medium px-4">Regularly updated with
+                        current CRA rules for retirement benefit optimization.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Blog / Insights Section -->
+    <section id="insights" class="py-32 bg-white">
+        <div class="max-w-7xl mx-auto px-6 sm:px-8">
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-16 section-header">
+                <div>
+                    <span class="text-xs font-bold tracking-[0.2em] uppercase text-nobel-gold mb-4 block">Knowledge
+                        Base</span>
+                    <h2 class="serif text-4xl sm:text-5xl font-bold text-nobel-dark">The Retirement Playbook</h2>
+                </div>
+                <a href="#"
+                    class="mt-6 sm:mt-0 text-nobel-dark text-[11px] font-bold tracking-widest uppercase border-b border-nobel-gold pb-1 hover:text-nobel-gold transition-colors">View
+                    all articles &rarr;</a>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-12 blog-cards">
+                <!-- Article 1 -->
+                <article class="group cursor-pointer">
+                    <div class="aspect-[16/10] bg-gray-50 mb-8 overflow-hidden rounded-sm relative">
+                        <div class="absolute inset-0 bg-nobel-dark/5 group-hover:bg-nobel-gold/10 transition-colors">
+                        </div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span
+                                class="serif text-5xl italic text-nobel-dark/10 group-hover:text-nobel-gold/20 transition-colors">Strategy</span>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-bold tracking-widest uppercase text-nobel-gold mb-3 block">Critical
+                        Insight</span>
+                    <h3
+                        class="serif text-2xl font-bold text-nobel-dark mb-4 leading-snug group-hover:text-nobel-gold transition-colors">
+                        Why 95% of Canadians Take CPP Too Early</h3>
+                    <p class="text-sm text-nobel-dark/60 leading-relaxed font-medium line-clamp-2">The math is clear,
+                        yet almost everyone leaves money on the table. Here's why psychology beats actuarial science.
+                    </p>
+                </article>
+
+                <!-- Article 2 -->
+                <article class="group cursor-pointer">
+                    <div class="aspect-[16/10] bg-gray-50 mb-8 overflow-hidden rounded-sm relative">
+                        <div class="absolute inset-0 bg-nobel-dark/5 group-hover:bg-nobel-gold/10 transition-colors">
+                        </div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span
+                                class="serif text-5xl italic text-nobel-dark/10 group-hover:text-nobel-gold/20 transition-colors">Risk</span>
+                        </div>
+                    </div>
+                    <span
+                        class="text-[10px] font-bold tracking-widest uppercase text-nobel-gold mb-3 block">Planning</span>
+                    <h3
+                        class="serif text-2xl font-bold text-nobel-dark mb-4 leading-snug group-hover:text-nobel-gold transition-colors">
+                        The "Death Zone" in Retirement Planning</h3>
+                    <p class="text-sm text-nobel-dark/60 leading-relaxed font-medium line-clamp-2">Ages 65-72 are the
+                        most dangerous years for your portfolio. Here's the withdrawal strategy that survives.</p>
+                </article>
+
+                <!-- Article 3 -->
+                <article class="group cursor-pointer">
+                    <div class="aspect-[16/10] bg-gray-50 mb-8 overflow-hidden rounded-sm relative">
+                        <div class="absolute inset-0 bg-nobel-dark/5 group-hover:bg-nobel-gold/10 transition-colors">
+                        </div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span
+                                class="serif text-5xl italic text-nobel-dark/10 group-hover:text-nobel-gold/20 transition-colors">Economy</span>
+                        </div>
+                    </div>
+                    <span
+                        class="text-[10px] font-bold tracking-widest uppercase text-nobel-gold mb-3 block">Warning</span>
+                    <h3
+                        class="serif text-2xl font-bold text-nobel-dark mb-4 leading-snug group-hover:text-nobel-gold transition-colors">
+                        How Inflation Destroys Fixed Income</h3>
+                    <p class="text-sm text-nobel-dark/60 leading-relaxed font-medium line-clamp-2">Your $50,000 pension
+                        today is worth $30,000 in 20 years. Here's how to build inflation protection into your plan.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="py-32 bg-nobel-dark relative overflow-hidden">
+        <div class="absolute inset-0 bg-nobel-gold/5 opacity-50"></div>
+        <div class="relative max-w-4xl mx-auto px-6 text-center cta-section">
+            <h2 class="serif text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-8">Ready to Know Your Score?</h2>
+            <p class="text-lg text-white/60 mb-12 max-w-xl mx-auto leading-relaxed font-medium">Take the 2-minute
+                Retirement Readiness Assessment and discover exactly where your plan stands today.</p>
+            <a href="quiz.html"
+                class="gold-button inline-flex items-center justify-center px-12 py-5 text-sm font-bold tracking-widest uppercase rounded-sm shadow-2xl">
+                Get Your Free Score
+                <svg class="w-4 h-4 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3">
                     </path>
                 </svg>
-                <p class="text-sm font-medium">Enter details to see your bridge analysis</p>
-            </div>
+            </a>
+            <p class="mt-8 text-white/30 text-[10px] font-bold tracking-[0.2em] uppercase">No email required to start
+                &bull; Results in 2 minutes</p>
+        </div>
+    </section>
 
-            <!-- Results Container -->
-            <div id="results" class="hidden w-full h-full flex flex-col justify-between animate-fade-in space-y-6">
-
-                <!-- KPI Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <div
-                        class="p-5 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
-                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Cost to Bridge</p>
-                        <h3 id="cost-display" class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">$0</h3>
-                        <div id="afford-badge"
-                            class="mt-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Funded
-                        </div>
-                        <p id="afford-text"
-                            class="text-xs text-gray-500 dark:text-gray-400 mt-3 leading-relaxed hidden"></p>
+    <!-- Footer -->
+    <footer class="py-20 bg-white border-t border-gray-100">
+        <div class="max-w-7xl mx-auto px-6 sm:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-10">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-nobel-dark flex items-center justify-center rounded-sm">
+                        <svg class="w-5 h-5 text-nobel-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
                     </div>
-                    <div
-                        class="p-5 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
-                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Win Probability</p>
-                        <h3 id="prob-display" class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">0%</h3>
-                        <p class="text-xs text-gray-400 mt-2">Chance of beating basic CPP</p>
-                    </div>
+                    <span class="serif font-bold text-lg tracking-tight text-nobel-dark">The CPP Bridge</span>
                 </div>
-
-                <!-- Visualization -->
                 <div
-                    class="flex-grow flex flex-col justify-center min-h-[200px] sm:min-h-[250px] max-h-[300px] sm:max-h-[350px] relative p-4 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700">
-                    <p class="text-xs text-center text-gray-400 dark:text-gray-500 mt-4 mb-2 font-medium">
-                        Compare how your total income grows. The <span class="text-green-600 dark:text-green-400">Green
-                            Line</span> (Delay) starts later but steeper, overtaking the <span
-                            class="text-red-500 dark:text-red-400">Red Line</span> (Early) at the breakeven age.
-                    </p>
-                    <canvas id="resultChart"></canvas>
+                    class="flex items-center space-x-10 text-[11px] font-bold tracking-widest uppercase text-nobel-dark/50">
+                    <a href="#" class="hover:text-nobel-gold transition-colors">Privacy</a>
+                    <a href="#" class="hover:text-nobel-gold transition-colors">Terms</a>
+                    <a href="#" class="hover:text-nobel-gold transition-colors">Contact</a>
                 </div>
-
-                <!-- EPV Comparison (Collapsible) -->
-                <details
-                    class="group bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl overflow-hidden">
-                    <summary
-                        class="flex items-center justify-between p-4 cursor-pointer text-xs font-semibold text-slate-500 uppercase tracking-wide hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                        <span>Expected Lifetime Value (Actuarial)</span>
-                        <span class="transition-transform group-open:rotate-180">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7">
-                                </path>
-                            </svg>
-                        </span>
-                    </summary>
-                    <div class="px-4 pb-4 bg-white dark:bg-slate-900 overflow-x-auto">
-                        <table class="w-full text-sm text-center">
-                            <thead class="bg-gray-50 dark:bg-slate-800 text-xs text-gray-500 uppercase font-semibold">
-                                <tr>
-                                    <th class="py-2 px-3 text-left">Strategy</th>
-                                    <th class="py-2 px-3">Monthly</th>
-                                    <th class="py-2 px-3 text-right">Lifetime Value (EPV)</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
-                                <tr>
-                                    <td class="py-3 px-3 text-left font-medium text-slate-900 dark:text-white">Take
-                                        Early (65)
-                                    </td>
-                                    <td id="epv-monthly-early" class="py-3 px-3 text-slate-600 dark:text-slate-300">$0
-                                    </td>
-                                    <td id="epv-total-early"
-                                        class="py-3 px-3 text-right font-bold text-slate-900 dark:text-white">
-                                        $0</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-3 px-3 text-left font-medium text-slate-900 dark:text-white">Delay
-                                        (70)</td>
-                                    <td id="epv-monthly-delayed" class="py-3 px-3 text-slate-600 dark:text-slate-300">$0
-                                    </td>
-                                    <td id="epv-total-delayed"
-                                        class="py-3 px-3 text-right font-bold text-green-600 dark:text-green-400">
-                                        $0</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <p class="mt-2 text-xs text-gray-400 italic text-center">
-                            *Present value of all future payments weighted by survival probability.
-                        </p>
-                    </div>
-                </details>
-
-                <!-- Recommendation -->
-                <div
-                    class="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                    <div class="flex items-start space-x-3">
-                        <div class="flex-shrink-0 mt-0.5">
-                            <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <p id="rec-text"
-                            class="text-sm text-indigo-900 dark:text-indigo-200 font-medium leading-relaxed italic">
-                            Analysis loading...
-                        </p>
-                    </div>
-                </div>
-
             </div>
+            <div
+                class="mt-16 pt-8 border-t border-gray-50 flex flex-col md:flex-row items-center justify-between gap-6 text-[10px] font-bold tracking-widest uppercase text-nobel-dark/30">
+                <p>&copy; 2025 The CPP Bridge. Made in Canada.</p>
+                <p class="text-center italic">Educational purposes only &bull; Not financial advice</p>
+            </div>
+        </div>
+    </footer>
 
+    <!-- Sticky Scorecard Banner -->
+    <div id="sticky-banner"
+        class="sticky-banner fixed bottom-0 left-0 right-0 z-40 p-4 bg-nobel-dark shadow-2xl border-t border-nobel-gold/20">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 px-6">
+            <div class="flex items-center text-white">
+                <svg class="w-5 h-5 mr-4 text-nobel-gold flex-shrink-0" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-sm font-bold tracking-widest uppercase">Do you have the 4 Pillars? <span
+                        class="hidden sm:inline text-white/50 tracking-normal normal-case font-medium ml-2">Find out in
+                        2 minutes.</span></span>
+            </div>
+            <a href="quiz.html"
+                class="gold-button px-8 py-2.5 text-[10px] font-bold tracking-widest uppercase rounded-sm translate-y-0 hover:-translate-y-0.5 shadow-lg">
+                Take the Quiz
+            </a>
         </div>
     </div>
 
-    <script src="js/calculator.js"></script>
-    <script src="js/whitelabel.js"></script>
+    <!-- Scripts -->
+    <script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Sticky banner visibility
+        const stickyBanner = document.getElementById('sticky-banner');
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 500) {
+                stickyBanner.classList.add('visible');
+            } else {
+                stickyBanner.classList.remove('visible');
+            }
+        });
+
+        // GSAP Animations
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Hero animations
+        gsap.from('.hero-content', {
+            opacity: 0,
+            y: 30,
+            duration: 1.2,
+            ease: 'expo.out'
+        });
+
+        // Section headers fade in
+        gsap.utils.toArray('.section-header').forEach(header => {
+            gsap.from(header, {
+                scrollTrigger: {
+                    trigger: header,
+                    start: 'top 90%'
+                },
+                opacity: 0,
+                y: 20,
+                duration: 1,
+                ease: 'power2.out'
+            });
+        });
+
+        // Cards stagger
+        gsap.utils.toArray('.card').forEach((card, i) => {
+            gsap.from(card, {
+                scrollTrigger: {
+                    trigger: card,
+                    start: 'top 90%'
+                },
+                opacity: 0,
+                y: 30,
+                duration: 0.8,
+                delay: i * 0.1,
+                ease: 'power2.out'
+            });
+        });
+    </script>
 </body>
 
 </html>

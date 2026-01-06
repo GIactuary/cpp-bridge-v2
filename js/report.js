@@ -4,6 +4,7 @@
 
 let reportData = null;
 let calculatorData = null;
+let radarChart = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     // Apply saved theme
@@ -28,6 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Render the dashboard with slight delay for animation effect
     setTimeout(() => {
         renderScoreCard();
+        renderRadarChart();
         renderCategoryCards();
         renderInsights();
         renderCalculatorRecap();
@@ -71,58 +73,140 @@ function renderScoreCard() {
         green: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
     };
     badge.className = `inline-block px-4 py-1 rounded-full text-sm font-bold mb-3 ${badgeClasses[score.category]}`;
-    badge.textContent = score.category.toUpperCase();
+    badge.textContent = score.label.toUpperCase();
 
     // Set label
     document.getElementById('score-label').textContent = score.label;
 
-    // Set summary
+    // Set summary based on archetype
     const summaries = {
-        red: "Your retirement plan has critical gaps that need immediate attention. Let's work on improving your score.",
-        amber: "You have a good foundation, but there are optimization opportunities to strengthen your position.",
-        green: "Excellent! You're well-prepared for retirement. Focus on maintaining and fine-tuning your strategy."
+        red: "You have the assets but lack the architecture. Your retirement plan has critical gaps that need immediate attention to protect your financial future.",
+        amber: "Your plan is good, but is it efficient? There are optimization opportunities that could save you tens of thousands in taxes and lost benefits.",
+        green: "Excellent! You're a Resilient Strategist. Your plan has been thoughtfully constructed. Focus on maintaining and fine-tuning your strategy."
     };
     document.getElementById('score-summary').textContent = summaries[score.category];
 }
 
 // ============================================
-// CATEGORY CARDS RENDERING
+// RADAR CHART RENDERING
+// ============================================
+function renderRadarChart() {
+    const breakdown = reportData.score.breakdown.quiz;
+    const isDark = document.documentElement.classList.contains('dark');
+
+    // Calculate percentages for each category using dynamic max from API
+    const categories = ['foundation', 'income', 'tax', 'lifestyle', 'risk'];
+    const categoryLabels = ['Foundation', 'Income', 'Tax Strategy', 'Lifestyle', 'Risk'];
+
+    const data = categories.map(cat => {
+        const catData = breakdown[cat];
+        if (!catData) return 0;
+        // Use dynamic max from breakdown (adjusted for user situation)
+        const max = catData.max || 0;
+        if (max === 0) return 0;
+        return Math.round((catData.points / max) * 100);
+    });
+
+    const ctx = document.getElementById('radar-chart').getContext('2d');
+
+    radarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                label: 'Your Score',
+                data: data,
+                fill: true,
+                backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(79, 70, 229, 0.2)',
+                borderColor: isDark ? 'rgba(129, 140, 248, 1)' : 'rgba(79, 70, 229, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: isDark ? 'rgba(129, 140, 248, 1)' : 'rgba(79, 70, 229, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: isDark ? 'rgba(129, 140, 248, 1)' : 'rgba(79, 70, 229, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 20,
+                        color: isDark ? '#94A3B8' : '#64748B',
+                        backdropColor: 'transparent'
+                    },
+                    grid: {
+                        color: isDark ? '#334155' : '#E2E8F0'
+                    },
+                    angleLines: {
+                        color: isDark ? '#334155' : '#E2E8F0'
+                    },
+                    pointLabels: {
+                        color: isDark ? '#E2E8F0' : '#1E293B',
+                        font: {
+                            size: 12,
+                            weight: '500'
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// ============================================
+// CATEGORY CARDS RENDERING (5 categories)
 // ============================================
 function renderCategoryCards() {
     const breakdown = reportData.score.breakdown.quiz;
-    const categories = ['income', 'assets', 'tax', 'psychology'];
-    const barColors = {
-        income: 'bg-emerald-500',
-        assets: 'bg-blue-500',
-        tax: 'bg-amber-500',
-        psychology: 'bg-purple-500'
-    };
+    const categories = ['foundation', 'income', 'tax', 'lifestyle', 'risk'];
 
     categories.forEach((cat, index) => {
         const data = breakdown[cat];
-        const percentage = (data.points / data.max) * 100;
+        if (!data) return;
+
+        // Use dynamic max from breakdown (adjusted for user situation)
+        const max = data.max || 0;
+        const percentage = max > 0 ? (data.points / max) * 100 : 0;
 
         // Show card
-        document.getElementById(`${cat}-card`).style.opacity = '1';
+        const card = document.getElementById(`${cat}-card`);
+        if (card) card.style.opacity = '1';
 
         // Animate bar
         setTimeout(() => {
-            document.getElementById(`${cat}-bar`).style.width = `${percentage}%`;
-        }, 300 + (index * 200));
+            const bar = document.getElementById(`${cat}-bar`);
+            if (bar) bar.style.width = `${percentage}%`;
+        }, 300 + (index * 150));
 
-        // Set points
-        document.getElementById(`${cat}-points`).textContent = data.points;
+        // Set points with dynamic max
+        const pointsEl = document.getElementById(`${cat}-points`);
+        if (pointsEl) pointsEl.textContent = data.points;
+
+        // Update max display
+        const maxEl = document.getElementById(`${cat}-max`);
+        if (maxEl) maxEl.textContent = max;
 
         // Set rating badge
-        const rating = data.rating || getRating(data.points, data.max);
+        const rating = data.rating || getRating(data.points, max);
         const ratingBadge = document.getElementById(`${cat}-rating`);
-        const ratingClasses = {
-            low: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-            medium: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-            high: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-        };
-        ratingBadge.className = `px-2 py-0.5 rounded text-xs font-bold ${ratingClasses[rating]}`;
-        ratingBadge.textContent = rating.toUpperCase();
+        if (ratingBadge) {
+            const ratingClasses = {
+                low: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+                medium: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+                high: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+            };
+            ratingBadge.className = `px-2 py-0.5 rounded text-xs font-bold ${ratingClasses[rating]}`;
+            ratingBadge.textContent = rating.toUpperCase();
+        }
     });
 }
 
@@ -154,12 +238,14 @@ function renderInsights() {
 // CALCULATOR RECAP
 // ============================================
 function renderCalculatorRecap() {
-    if (!calculatorData) return;
+    // Try to get data from calculator breakdown first, then fall back to session
+    const calcData = reportData.score?.breakdown?.calculator || calculatorData;
+    if (!calcData) return;
 
-    document.getElementById('recap-cost').textContent = '$' + (calculatorData.bridge_cost || 0).toLocaleString();
-    document.getElementById('recap-prob').textContent = ((calculatorData.win_probability || 0) * 100).toFixed(0) + '%';
-    document.getElementById('recap-breakeven').textContent = 'Age ' + (calculatorData.breakeven_age || '--');
-    document.getElementById('recap-rec').textContent = calculatorData.recommendation || '--';
+    document.getElementById('recap-cost').textContent = '$' + (calcData.bridge_cost || 0).toLocaleString();
+    document.getElementById('recap-prob').textContent = ((calcData.win_probability || 0) * 100).toFixed(0) + '%';
+    document.getElementById('recap-breakeven').textContent = 'Age ' + (calcData.breakeven_age || '--');
+    document.getElementById('recap-rec').textContent = calcData.recommendation || '--';
 }
 
 // ============================================

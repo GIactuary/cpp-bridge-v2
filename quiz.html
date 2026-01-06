@@ -55,34 +55,57 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h1 id="quiz-logo" class="text-xl font-bold text-white">CPP Bridge</h1>
-                    <p class="text-indigo-200 text-sm">Retirement Readiness Assessment</p>
+                    <p id="header-subtitle" class="text-indigo-200 text-sm">Retirement Readiness Assessment</p>
                 </div>
                 <div class="text-right">
                     <p class="text-indigo-200 text-sm">Question</p>
-                    <p class="text-white font-bold text-xl"><span id="current-q">1</span> / <span id="total-q">12</span></p>
+                    <p class="text-white font-bold text-xl"><span id="current-q">1</span><span id="total-q-wrapper"> / <span id="total-q">25</span></span></p>
                 </div>
             </div>
             <!-- Progress Bar -->
             <div class="mt-4 h-2 bg-indigo-400/30 rounded-full overflow-hidden">
-                <div id="progress-bar" class="progress-bar h-full bg-white rounded-full" style="width: 8.33%"></div>
+                <div id="progress-bar" class="progress-bar h-full bg-white rounded-full" style="width: 0%"></div>
             </div>
         </div>
 
-        <!-- Context Card (Pre-filled from Calculator) -->
-        <div id="context-card" class="mx-6 mt-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+        <!-- Context Card (Pre-filled from Calculator) - Hidden during personalization -->
+        <div id="context-card" class="hidden mx-6 mt-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
             <p class="text-sm text-indigo-900 dark:text-indigo-200">
                 <span class="font-semibold">Your Profile:</span>
                 <span id="context-text">Loading...</span>
             </p>
         </div>
 
+        <!-- Personalization Intro (Shown at start) -->
+        <div id="personalization-intro" class="p-6 min-h-[300px]">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center">
+                    <svg class="w-10 h-10 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">Let's Personalize Your Quiz</h2>
+                <p class="text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+                    Answer 4 quick questions so we only ask what's relevant to your situation. This takes about 30 seconds.
+                </p>
+            </div>
+
+            <div class="max-w-sm mx-auto">
+                <button onclick="startPersonalization()"
+                    class="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-bold rounded-xl shadow-lg hover:from-indigo-700 hover:to-indigo-600 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+                    Get Started
+                </button>
+                <p class="text-xs text-center text-slate-400 mt-4">Based on your calculator results, your personalized quiz will have 19-25 questions.</p>
+            </div>
+        </div>
+
         <!-- Question Container -->
-        <div id="question-container" class="p-6 min-h-[300px]">
+        <div id="question-container" class="hidden p-6 min-h-[300px]">
             <!-- Dynamically populated -->
         </div>
 
-        <!-- Navigation -->
-        <div id="nav-buttons" class="p-6 pt-0 flex justify-between items-center">
+        <!-- Navigation (Hidden during intro phase) -->
+        <div id="nav-buttons" class="hidden p-6 pt-0 flex justify-between items-center">
             <button id="btn-back" onclick="previousQuestion()"
                 class="px-6 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-30"
                 disabled>

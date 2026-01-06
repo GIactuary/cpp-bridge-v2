@@ -132,6 +132,7 @@ function toggleTheme() {
 function updateIcons(mode) {
     const sun = $('sun-icon');
     const moon = $('moon-icon');
+    if (!sun || !moon) return; // Icons not present (dark mode disabled)
     if (mode === 'dark') { sun.classList.remove('hidden'); moon.classList.add('hidden'); }
     else { sun.classList.add('hidden'); moon.classList.remove('hidden'); }
 }

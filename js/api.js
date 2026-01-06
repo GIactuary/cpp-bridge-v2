@@ -48,26 +48,73 @@ async function submitLeadMock(payload) {
 }
 
 // ============================================
-// LOCAL SCORE CALCULATION
+// LOCAL SCORE CALCULATION (Quiz-only, 100 pts normalized)
 // ============================================
+
+// Base category max points (when all questions apply)
+const BASE_CATEGORY_MAX = {
+    foundation: 13,  // Q1-Q5: 5+2+2+2+2
+    income: 27,      // Q6-Q10: 10+5+2+5+5
+    tax: 40,         // Q11-Q16: 10+5+10+5+5+5
+    lifestyle: 13,   // Q17-Q21: 2+5+2+2+2
+    risk: 25         // Q22-Q25: 10+5+5+5
+};
+const BASE_TOTAL_RAW_POINTS = 118; // Sum of all weights
+
+// Calculate dynamic max based on user situation (skip points for inapplicable questions)
+function calculateDynamicMax(userSituation) {
+    let total = BASE_TOTAL_RAW_POINTS;
+    let categoryMax = { ...BASE_CATEGORY_MAX };
+
+    if (!userSituation) return { total, categoryMax };
+
+    // Q9: Bridge strategy (income, 5 pts) - requires nearRetirement
+    if (!userSituation.nearRetirement) {
+        total -= 5;
+        categoryMax.income -= 5;
+    }
+
+    // Q14: Corporate retained earnings (tax, 5 pts) - requires corporation
+    if (!userSituation.corporation) {
+        total -= 5;
+        categoryMax.tax -= 5;
+    }
+
+    // Q16: Income splitting with spouse (tax, 5 pts) - requires spouse
+    if (!userSituation.spouse) {
+        total -= 5;
+        categoryMax.tax -= 5;
+    }
+
+    // Q19: Helping child buy home (lifestyle, 2 pts) - requires children
+    if (!userSituation.children) {
+        total -= 2;
+        categoryMax.lifestyle -= 2;
+    }
+
+    // Q20: Downsizing residence (lifestyle, 2 pts) - requires homeowner
+    if (!userSituation.homeowner) {
+        total -= 2;
+        categoryMax.lifestyle -= 2;
+    }
+
+    // Q25: Spouse death impact (risk, 5 pts) - requires spouse
+    if (!userSituation.spouse) {
+        total -= 5;
+        categoryMax.risk -= 5;
+    }
+
+    return { total, categoryMax };
+}
+
 function calculateLocalScore(payload) {
-    let calcPoints = 0;
-    let quizPoints = 0;
-
-    // Calculator points (30 max)
-    // 15 points for affordability
-    if (payload.calculator_data.is_affordable) {
-        calcPoints += 15;
-    }
-    // 15 points for win probability >= 50%
-    if (payload.calculator_data.win_probability >= 0.5) {
-        calcPoints += 15;
-    }
-
-    // Quiz points calculation
     const answers = payload.quiz_answers;
-    let categoryScores = { income: 0, assets: 0, tax: 0, psychology: 0 };
-    const categoryMax = { income: 25, assets: 20, tax: 15, psychology: 10 };
+    const userSituation = payload.user_situation || {};
+    let categoryScores = { foundation: 0, income: 0, tax: 0, lifestyle: 0, risk: 0 };
+    let rawPoints = 0;
+
+    // Calculate dynamic max based on user situation
+    const { total: dynamicMax, categoryMax } = calculateDynamicMax(userSituation);
 
     // Reference QUIZ_DATA from quiz.js
     const quizData = typeof QUIZ_DATA !== 'undefined' ? QUIZ_DATA : getQuizDataFallback();
@@ -92,57 +139,70 @@ function calculateLocalScore(payload) {
         }
 
         categoryScores[q.category] += points;
-        quizPoints += points;
+        rawPoints += points;
     });
 
-    const total = calcPoints + quizPoints;
+    // Normalize to 100-point scale using dynamic max
+    const normalizedTotal = Math.round((rawPoints / dynamicMax) * 100);
 
-    // Determine category and label
-    let category, label;
-    if (total < 50) {
-        category = 'red';
-        label = 'Critical Gaps Detected';
-    } else if (total < 75) {
-        category = 'amber';
-        label = 'Optimizable';
+    // Determine archetype and label based on normalized score
+    let archetype, label;
+    if (normalizedTotal <= 45) {
+        archetype = 'red';
+        label = 'Vulnerable Saver';
+    } else if (normalizedTotal <= 75) {
+        archetype = 'amber';
+        label = 'Unoptimized Accumulator';
     } else {
-        category = 'green';
-        label = 'Retirement Ready';
+        archetype = 'green';
+        label = 'Resilient Strategist';
     }
 
     return {
-        total: total,
-        category: category,
+        total: normalizedTotal,
+        rawPoints: rawPoints,
+        dynamicMax: dynamicMax,
+        category: archetype,
         label: label,
+        userSituation: userSituation,
         breakdown: {
-            calculator: {
-                points: calcPoints,
-                affordable_points: payload.calculator_data.is_affordable ? 15 : 0,
-                probability_points: payload.calculator_data.win_probability >= 0.5 ? 15 : 0
-            },
             quiz: {
-                points: quizPoints,
+                points: rawPoints,
+                maxPoints: dynamicMax,
+                foundation: {
+                    points: categoryScores.foundation,
+                    max: categoryMax.foundation,
+                    rating: getRating(categoryScores.foundation, categoryMax.foundation)
+                },
                 income: {
                     points: categoryScores.income,
                     max: categoryMax.income,
                     rating: getRating(categoryScores.income, categoryMax.income)
-                },
-                assets: {
-                    points: categoryScores.assets,
-                    max: categoryMax.assets,
-                    rating: getRating(categoryScores.assets, categoryMax.assets)
                 },
                 tax: {
                     points: categoryScores.tax,
                     max: categoryMax.tax,
                     rating: getRating(categoryScores.tax, categoryMax.tax)
                 },
-                psychology: {
-                    points: categoryScores.psychology,
-                    max: categoryMax.psychology,
-                    rating: getRating(categoryScores.psychology, categoryMax.psychology)
+                lifestyle: {
+                    points: categoryScores.lifestyle,
+                    max: categoryMax.lifestyle,
+                    rating: getRating(categoryScores.lifestyle, categoryMax.lifestyle)
+                },
+                risk: {
+                    points: categoryScores.risk,
+                    max: categoryMax.risk,
+                    rating: getRating(categoryScores.risk, categoryMax.risk)
                 }
-            }
+            },
+            // Calculator data preserved as separate insight (not scored)
+            calculator: payload.calculator_data ? {
+                bridge_cost: payload.calculator_data.bridge_cost,
+                is_affordable: payload.calculator_data.is_affordable,
+                win_probability: payload.calculator_data.win_probability,
+                breakeven_age: payload.calculator_data.breakeven_age,
+                recommendation: payload.calculator_data.recommendation
+            } : null
         }
     };
 }
@@ -160,29 +220,51 @@ function getRating(points, max) {
 function generateLocalInsights(score, payload) {
     const weakest = findWeakestCategory(score.breakdown.quiz);
 
+    // Category-specific verdicts based on score thresholds
     const verdicts = {
-        income: "Your Income Security score suggests exploring additional guaranteed income sources like annuities or considering whether delaying CPP benefits could strengthen your foundation.",
-        assets: "Your Asset Longevity score indicates room for improvement in your withdrawal strategy. A formal drawdown plan could help ensure your savings last.",
-        tax: "Your Tax Efficiency score suggests potential optimization opportunities. Proper RRSP/TFSA drawdown sequencing could save significant taxes over your retirement.",
-        psychology: "Your Psychological Readiness score suggests spending more time planning for your retirement lifestyle and discussing plans with family."
+        foundation: {
+            low: "You lack a documented plan. Without year-by-year projections, you're flying blind into retirement.",
+            high: "Strong foundation. You have clarity on your financial trajectory."
+        },
+        income: {
+            low: "Your income strategy has gaps. Consider CPP/OAS optimization and income diversification.",
+            high: "Your income sources are well-diversified and optimized."
+        },
+        tax: {
+            low: "⚠️ Critical: No withdrawal algorithm detected. You could be overpaying taxes by tens of thousands of dollars.",
+            high: "Strong tax efficiency. You understand decumulation sequencing."
+        },
+        lifestyle: {
+            low: "Your plan may not account for real-world expenses like long-term care or family support.",
+            high: "You've realistically modeled your retirement lifestyle phases."
+        },
+        risk: {
+            low: "⚠️ Warning: Your plan hasn't been stress-tested. A market crash could derail your retirement.",
+            high: "You've built resilience against market volatility and longevity risk."
+        }
     };
+
+    const weakestData = score.breakdown.quiz[weakest];
+    const isLow = weakestData.rating === 'low' || weakestData.rating === 'medium';
+    const verdict = isLow ? verdicts[weakest].low : verdicts[weakest].high;
 
     const recommendations = generateRecommendations(score, payload, weakest);
 
     return {
-        verdict: verdicts[weakest],
+        verdict: verdict,
         weakest_category: weakest,
         recommendations: recommendations
     };
 }
 
 function findWeakestCategory(quizBreakdown) {
-    const categories = ['income', 'assets', 'tax', 'psychology'];
+    const categories = ['foundation', 'income', 'tax', 'lifestyle', 'risk'];
     let weakest = 'tax';
     let lowestRatio = 1;
 
     categories.forEach(cat => {
         const data = quizBreakdown[cat];
+        if (!data) return;
         const ratio = data.points / data.max;
         if (ratio < lowestRatio) {
             lowestRatio = ratio;
@@ -196,30 +278,36 @@ function findWeakestCategory(quizBreakdown) {
 function generateRecommendations(score, payload, weakest) {
     const recommendations = [];
 
-    // CPP-specific recommendation
-    if (payload.calculator_data.win_probability > 0.5) {
-        recommendations.push(`Consider delaying CPP to age 70 given your ${(payload.calculator_data.win_probability * 100).toFixed(0)}% probability of benefiting`);
-    } else {
-        recommendations.push("Review your CPP timing strategy - taking at 65 may be optimal for your situation");
+    // CPP-specific recommendation based on calculator data
+    if (payload.calculator_data && payload.calculator_data.win_probability) {
+        if (payload.calculator_data.win_probability > 0.5) {
+            recommendations.push(`Consider delaying CPP to age 70 given your ${(payload.calculator_data.win_probability * 100).toFixed(0)}% probability of benefiting`);
+        } else {
+            recommendations.push("Review your CPP timing strategy - taking at 65 may be optimal for your situation");
+        }
     }
 
     // Category-specific recommendations
     const categoryRecs = {
-        income: [
-            "Explore annuity options to increase guaranteed income",
-            "Review whether your employer offers any bridge benefits"
+        foundation: [
+            "Create a documented, year-by-year cash flow projection to age 95",
+            "Consolidate all your financial data into a single planning tool"
         ],
-        assets: [
-            "Create a formal written withdrawal strategy",
-            "Ensure you have 2-5 years of expenses in liquid assets"
+        income: [
+            "Calculate the exact benefit of deferring CPP/OAS to age 70",
+            "Explore whether a bridge strategy makes sense for your situation"
         ],
         tax: [
-            "Consult with a tax professional about drawdown sequencing",
-            "Consider RRSP meltdown strategies before age 72"
+            "Develop a specific algorithm for which accounts to withdraw from each year",
+            "Explore RRSP meltdown strategies before mandatory RRIF conversions at 72"
         ],
-        psychology: [
-            "Define specific goals and activities for your retirement",
-            "Have a detailed financial discussion with your spouse/family"
+        lifestyle: [
+            "Build a specific buffer for long-term care costs in your later years",
+            "Track your current spending accurately to project realistic retirement needs"
+        ],
+        risk: [
+            "Stress-test your plan against a 30% market drop in early retirement",
+            "Build a Cash Wedge of 1-2 years expenses in liquid savings"
         ]
     };
 
@@ -267,20 +355,38 @@ function generateUUID() {
     });
 }
 
-// Fallback quiz data if QUIZ_DATA not available
+// Fallback quiz data if QUIZ_DATA not available (matches new 25-question structure with branching)
 function getQuizDataFallback() {
     return [
-        { id: "q1", category: "income", type: "boolean", yes_score: 10, no_score: 0 },
-        { id: "q2", category: "income", type: "slider", min: 0, max: 100, weight: 10 },
-        { id: "q3", category: "income", type: "boolean", yes_score: 5, no_score: 0 },
-        { id: "q4", category: "assets", type: "multiple_choice", options: [{ score: 10 }, { score: 5 }, { score: 0 }] },
-        { id: "q5", category: "assets", type: "multiple_choice", options: [{ score: 5 }, { score: 3 }, { score: 0 }] },
-        { id: "q6", category: "assets", type: "boolean", yes_score: 5, no_score: 0 },
-        { id: "q7", category: "tax", type: "multiple_choice", options: [{ score: 7 }, { score: 3 }, { score: 0 }] },
-        { id: "q8", category: "tax", type: "boolean", yes_score: 4, no_score: 0 },
-        { id: "q9", category: "tax", type: "multiple_choice", options: [{ score: 4 }, { score: 2 }, { score: 0 }] },
-        { id: "q10", category: "psychology", type: "slider", min: 1, max: 10, weight: 4 },
-        { id: "q11", category: "psychology", type: "boolean", yes_score: 3, no_score: 0 },
-        { id: "q12", category: "psychology", type: "multiple_choice", options: [{ score: 3 }, { score: 1 }, { score: 0 }] }
+        // Foundation (13 pts) - always shown
+        { id: "q1", category: "foundation", type: "boolean", weight: 5, yes_score: 5, no_score: 0 },
+        { id: "q2", category: "foundation", type: "boolean", weight: 2, yes_score: 2, no_score: 0 },
+        { id: "q3", category: "foundation", type: "slider", min: 1, max: 10, weight: 2 },
+        { id: "q4", category: "foundation", type: "boolean", weight: 2, yes_score: 2, no_score: 0 },
+        { id: "q5", category: "foundation", type: "boolean", weight: 2, yes_score: 2, no_score: 0 },
+        // Income (22-27 pts) - Q9 conditional
+        { id: "q6", category: "income", type: "boolean", weight: 10, yes_score: 10, no_score: 0 },
+        { id: "q7", category: "income", type: "boolean", weight: 5, yes_score: 5, no_score: 0 },
+        { id: "q8", category: "income", type: "boolean", weight: 2, yes_score: 2, no_score: 0 },
+        { id: "q9", category: "income", type: "boolean", weight: 5, yes_score: 5, no_score: 0, requires: "nearRetirement" },
+        { id: "q10", category: "income", type: "boolean", weight: 5, yes_score: 5, no_score: 0 },
+        // Tax (30-40 pts) - Q14 and Q16 conditional
+        { id: "q11", category: "tax", type: "boolean", weight: 10, yes_score: 10, no_score: 0 },
+        { id: "q12", category: "tax", type: "boolean", weight: 5, yes_score: 5, no_score: 0 },
+        { id: "q13", category: "tax", type: "boolean", weight: 10, yes_score: 10, no_score: 0 },
+        { id: "q14", category: "tax", type: "boolean", weight: 5, yes_score: 5, no_score: 0, requires: "corporation" },
+        { id: "q15", category: "tax", type: "boolean", weight: 5, yes_score: 5, no_score: 0 },
+        { id: "q16", category: "tax", type: "boolean", weight: 5, yes_score: 5, no_score: 0, requires: "spouse" },
+        // Lifestyle (9-13 pts) - Q19 and Q20 conditional
+        { id: "q17", category: "lifestyle", type: "boolean", weight: 2, yes_score: 2, no_score: 0 },
+        { id: "q18", category: "lifestyle", type: "boolean", weight: 5, yes_score: 5, no_score: 0 },
+        { id: "q19", category: "lifestyle", type: "boolean", weight: 2, yes_score: 2, no_score: 0, requires: "children" },
+        { id: "q20", category: "lifestyle", type: "boolean", weight: 2, yes_score: 2, no_score: 0, requires: "homeowner" },
+        { id: "q21", category: "lifestyle", type: "slider", min: 1, max: 10, weight: 2 },
+        // Risk (20-25 pts) - Q25 conditional
+        { id: "q22", category: "risk", type: "boolean", weight: 10, yes_score: 10, no_score: 0 },
+        { id: "q23", category: "risk", type: "boolean", weight: 5, yes_score: 5, no_score: 0 },
+        { id: "q24", category: "risk", type: "boolean", weight: 5, yes_score: 5, no_score: 0 },
+        { id: "q25", category: "risk", type: "boolean", weight: 5, yes_score: 5, no_score: 0, requires: "spouse" }
     ];
 }
